@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1400" height="900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #34495e; }
+      .label { font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; fill: #2c3e50; }
+      .component { font-family: Arial, sans-serif; font-size: 10px; fill: #ffffff; }
+      .data-label { font-family: Arial, sans-serif; font-size: 9px; fill: #2c3e50; }
+      .arrow { stroke: #7f8c8d; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .price-flow { stroke: #3498db; stroke-width: 3; fill: none; marker-end: url(#price-arrow); }
+      .trade-flow { stroke: #e74c3c; stroke-width: 3; fill: none; marker-end: url(#trade-arrow); }
+      .api-flow { stroke: #27ae60; stroke-width: 3; fill: none; marker-end: url(#api-arrow); }
+      .storage-flow { stroke: #9b59b6; stroke-width: 3; fill: none; marker-end: url(#storage-arrow); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7f8c8d" />
+    </marker>
+    <marker id="price-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3498db" />
+    </marker>
+    <marker id="trade-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#e74c3c" />
+    </marker>
+    <marker id="api-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#27ae60" />
+    </marker>
+    <marker id="storage-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#9b59b6" />
+    </marker>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1400" height="900" fill="#ecf0f1"/>
+  
+  <!-- Title -->
+  <text x="700" y="30" text-anchor="middle" class="title">DeFi Arbitrage Bot - Data Flow Diagram</text>
+  
+  <!-- External Data Sources -->
+  <rect x="50" y="60" width="300" height="120" fill="#34495e" rx="5"/>
+  <text x="200" y="85" text-anchor="middle" class="subtitle">External Data Sources</text>
+  
+  <rect x="70" y="100" width="80" height="25" fill="#2c3e50" rx="3"/>
+  <text x="110" y="115" text-anchor="middle" class="component">Ethereum</text>
+  <text x="110" y="125" text-anchor="middle" class="component">Blockchain</text>
+  
+  <rect x="170" y="100" width="80" height="25" fill="#2c3e50" rx="3"/>
+  <text x="210" y="115" text-anchor="middle" class="component">Uniswap</text>
+  <text x="210" y="125" text-anchor="middle" class="component">V2</text>
+  
+  <rect x="270" y="100" width="80" height="25" fill="#2c3e50" rx="3"/>
+  <text x="310" y="115" text-anchor="middle" class="component">Sushiswap</text>
+  
+  <rect x="70" y="140" width="80" height="25" fill="#2c3e50" rx="3"/>
+  <text x="110" y="155" text-anchor="middle" class="component">Infura</text>
+  <text x="110" y="165" text-anchor="middle" class="component">RPC</text>
+  
+  <rect x="170" y="140" width="80" height="25" fill="#2c3e50" rx="3"/>
+  <text x="210" y="155" text-anchor="middle" class="component">Alchemy</text>
+  <text x="210" y="165" text-anchor="middle" class="component">RPC</text>
+  
+  <rect x="270" y="140" width="80" height="25" fill="#2c3e50" rx="3"/>
+  <text x="310" y="155" text-anchor="middle" class="component">Public</text>
+  <text x="310" y="165" text-anchor="middle" class="component">RPC</text>
+  
+  <!-- Data Collection Layer -->
+  <rect x="400" y="60" width="300" height="120" fill="#27ae60" rx="5"/>
+  <text x="550" y="85" text-anchor="middle" class="subtitle">Data Collection Layer</text>
+  
+  <rect x="420" y="100" width="80" height="25" fill="#229954" rx="3"/>
+  <text x="460" y="115" text-anchor="middle" class="component">Web3</text>
+  <text x="460" y="125" text-anchor="middle" class="component">Manager</text>
+  
+  <rect x="520" y="100" width="80" height="25" fill="#229954" rx="3"/>
+  <text x="560" y="115" text-anchor="middle" class="component">DEX Price</text>
+  <text x="560" y="125" text-anchor="middle" class="component">Service</text>
+  
+  <rect x="620" y="100" width="80" height="25" fill="#229954" rx="3"/>
+  <text x="660" y="115" text-anchor="middle" class="component">Block Price</text>
+  <text x="660" y="125" text-anchor="middle" class="component">Manager</text>
+  
+  <rect x="420" y="140" width="80" height="25" fill="#229954" rx="3"/>
+  <text x="460" y="155" text-anchor="middle" class="component">Price</text>
+  <text x="460" y="165" text-anchor="middle" class="component">Cache</text>
+  
+  <rect x="520" y="140" width="80" height="25" fill="#229954" rx="3"/>
+  <text x="560" y="155" text-anchor="middle" class="component">Price</text>
+  <text x="560" y="165" text-anchor="middle" class="component">Monitoring</text>
+  
+  <rect x="620" y="140" width="80" height="25" fill="#229954" rx="3"/>
+  <text x="660" y="155" text-anchor="middle" class="component">MEV</text>
+  <text x="660" y="165" text-anchor="middle" class="component">Protection</text>
+  
+  <!-- Processing Layer -->
+  <rect x="750" y="60" width="300" height="120" fill="#f39c12" rx="5"/>
+  <text x="900" y="85" text-anchor="middle" class="subtitle">Processing Layer</text>
+  
+  <rect x="770" y="100" width="80" height="25" fill="#e67e22" rx="3"/>
+  <text x="810" y="115" text-anchor="middle" class="component">Trading</text>
+  <text x="810" y="125" text-anchor="middle" class="component">Strategy</text>
+  
+  <rect x="870" y="100" width="80" height="25" fill="#e67e22" rx="3"/>
+  <text x="910" y="115" text-anchor="middle" class="component">Risk</text>
+  <text x="910" y="125" text-anchor="middle" class="component">Manager</text>
+  
+  <rect x="970" y="100" width="80" height="25" fill="#e67e22" rx="3"/>
+  <text x="1010" y="115" text-anchor="middle" class="component">Execution</text>
+  <text x="1010" y="125" text-anchor="middle" class="component">Engine</text>
+  
+  <rect x="770" y="140" width="80" height="25" fill="#e67e22" rx="3"/>
+  <text x="810" y="155" text-anchor="middle" class="component">Arbitrage</text>
+  <text x="810" y="165" text-anchor="middle" class="component">Detection</text>
+  
+  <rect x="870" y="140" width="80" height="25" fill="#e67e22" rx="3"/>
+  <text x="910" y="155" text-anchor="middle" class="component">Position</text>
+  <text x="910" y="165" text-anchor="middle" class="component">Sizing</text>
+  
+  <rect x="970" y="140" width="80" height="25" fill="#e67e22" rx="3"/>
+  <text x="1010" y="155" text-anchor="middle" class="component">Gas</text>
+  <text x="1010" y="165" text-anchor="middle" class="component">Optimization</text>
+  
+  <!-- Storage Layer -->
+  <rect x="1100" y="60" width="250" height="120" fill="#9b59b6" rx="5"/>
+  <text x="1225" y="85" text-anchor="middle" class="subtitle">Storage Layer</text>
+  
+  <rect x="1120" y="100" width="80" height="25" fill="#8e44ad" rx="3"/>
+  <text x="1160" y="115" text-anchor="middle" class="component">SQLite</text>
+  <text x="1160" y="125" text-anchor="middle" class="component">Database</text>
+  
+  <rect x="1220" y="100" width="80" height="25" fill="#8e44ad" rx="3"/>
+  <text x="1260" y="115" text-anchor="middle" class="component">Logging</text>
+  <text x="1260" y="125" text-anchor="middle" class="component">System</text>
+  
+  <rect x="1120" y="140" width="80" height="25" fill="#8e44ad" rx="3"/>
+  <text x="1160" y="155" text-anchor="middle" class="component">Price</text>
+  <text x="1160" y="165" text-anchor="middle" class="component">History</text>
+  
+  <rect x="1220" y="140" width="80" height="25" fill="#8e44ad" rx="3"/>
+  <text x="1260" y="155" text-anchor="middle" class="component">Trade</text>
+  <text x="1260" y="165" text-anchor="middle" class="component">History</text>
+  
+  <!-- API Layer -->
+  <rect x="50" y="220" width="300" height="120" fill="#3498db" rx="5"/>
+  <text x="200" y="245" text-anchor="middle" class="subtitle">API Layer</text>
+  
+  <rect x="70" y="260" width="80" height="25" fill="#2980b9" rx="3"/>
+  <text x="110" y="275" text-anchor="middle" class="component">REST API</text>
+  <text x="110" y="285" text-anchor="middle" class="component">Server</text>
+  
+  <rect x="170" y="260" width="80" height="25" fill="#2980b9" rx="3"/>
+  <text x="210" y="275" text-anchor="middle" class="component">WebSocket</text>
+  <text x="210" y="285" text-anchor="middle" class="component">API</text>
+  
+  <rect x="270" y="260" width="80" height="25" fill="#2980b9" rx="3"/>
+  <text x="310" y="275" text-anchor="middle" class="component">CLI</text>
+  <text x="310" y="285" text-anchor="middle" class="component">Interface</text>
+  
+  <rect x="70" y="300" width="80" height="25" fill="#2980b9" rx="3"/>
+  <text x="110" y="315" text-anchor="middle" class="component">Rate</text>
+  <text x="110" y="325" text-anchor="middle" class="component">Limiting</text>
+  
+  <rect x="170" y="300" width="80" height="25" fill="#2980b9" rx="3"/>
+  <text x="210" y="315" text-anchor="middle" class="component">Authentication</text>
+  
+  <rect x="270" y="300" width="80" height="25" fill="#2980b9" rx="3"/>
+  <text x="310" y="315" text-anchor="middle" class="component">CORS</text>
+  <text x="310" y="325" text-anchor="middle" class="component">Support</text>
+  
+  <!-- User Interface -->
+  <rect x="400" y="220" width="300" height="120" fill="#e74c3c" rx="5"/>
+  <text x="550" y="245" text-anchor="middle" class="subtitle">User Interface</text>
+  
+  <rect x="420" y="260" width="80" height="25" fill="#c0392b" rx="3"/>
+  <text x="460" y="275" text-anchor="middle" class="component">Web</text>
+  <text x="460" y="285" text-anchor="middle" class="component">Dashboard</text>
+  
+  <rect x="520" y="260" width="80" height="25" fill="#c0392b" rx="3"/>
+  <text x="560" y="275" text-anchor="middle" class="component">Mobile</text>
+  <text x="560" y="285" text-anchor="middle" class="component">App</text>
+  
+  <rect x="620" y="260" width="80" height="25" fill="#c0392b" rx="3"/>
+  <text x="660" y="275" text-anchor="middle" class="component">CLI</text>
+  <text x="660" y="285" text-anchor="middle" class="component">Client</text>
+  
+  <rect x="420" y="300" width="80" height="25" fill="#c0392b" rx="3"/>
+  <text x="460" y="315" text-anchor="middle" class="component">Real-time</text>
+  <text x="460" y="325" text-anchor="middle" class="component">Charts</text>
+  
+  <rect x="520" y="300" width="80" height="25" fill="#c0392b" rx="3"/>
+  <text x="560" y="315" text-anchor="middle" class="component">Trade</text>
+  <text x="560" y="325" text-anchor="middle" class="component">History</text>
+  
+  <rect x="620" y="300" width="80" height="25" fill="#c0392b" rx="3"/>
+  <text x="660" y="315" text-anchor="middle" class="component">Settings</text>
+  <text x="660" y="325" text-anchor="middle" class="component">Panel</text>
+  
+  <!-- Data Flow Arrows -->
+  <!-- External to Collection -->
+  <line x1="350" y1="120" x2="400" y2="120" class="price-flow"/>
+  <text x="375" y="115" text-anchor="middle" class="data-label">Block Data</text>
+  
+  <line x1="350" y1="140" x2="400" y2="140" class="price-flow"/>
+  <text x="375" y="135" text-anchor="middle" class="data-label">Price Data</text>
+  
+  <!-- Collection to Processing -->
+  <line x1="700" y1="120" x2="750" y2="120" class="price-flow"/>
+  <text x="725" y="115" text-anchor="middle" class="data-label">Processed Prices</text>
+  
+  <line x1="700" y1="140" x2="750" y2="140" class="price-flow"/>
+  <text x="725" y="135" text-anchor="middle" class="data-label">Market Data</text>
+  
+  <!-- Processing to Storage -->
+  <line x1="1050" y1="120" x2="1100" y2="120" class="storage-flow"/>
+  <text x="1075" y="115" text-anchor="middle" class="data-label">Opportunities</text>
+  
+  <line x1="1050" y1="140" x2="1100" y2="140" class="storage-flow"/>
+  <text x="1075" y="135" text-anchor="middle" class="data-label">Trade Results</text>
+  
+  <!-- Storage to API -->
+  <line x1="1100" y1="180" x2="1100" y2="220" class="api-flow"/>
+  <line x1="1100" y1="220" x2="350" y2="220" class="api-flow"/>
+  <text x="725" y="215" text-anchor="middle" class="data-label">Historical Data</text>
+  
+  <!-- API to UI -->
+  <line x1="350" y1="280" x2="400" y2="280" class="api-flow"/>
+  <text x="375" y="275" text-anchor="middle" class="data-label">API Responses</text>
+  
+  <!-- UI to API -->
+  <line x1="400" y1="320" x2="350" y2="320" class="api-flow"/>
+  <text x="375" y="315" text-anchor="middle" class="data-label">User Requests</text>
+  
+  <!-- Processing to API -->
+  <line x1="1050" y1="180" x2="1050" y2="220" class="api-flow"/>
+  <line x1="1050" y1="220" x2="350" y2="220" class="api-flow"/>
+  <text x="700" y="225" text-anchor="middle" class="data-label">Real-time Data</text>
+  
+  <!-- Trade Execution Flow -->
+  <line x1="1050" y1="160" x2="1050" y2="200" class="trade-flow"/>
+  <line x1="1050" y1="200" x2="350" y2="200" class="trade-flow"/>
+  <line x1="350" y1="200" x2="350" y2="180" class="trade-flow"/>
+  <text x="700" y="195" text-anchor="middle" class="data-label">Trade Execution</text>
+  
+  <!-- Data Types -->
+  <rect x="50" y="400" width="1300" height="200" fill="#ffffff" stroke="#bdc3c7" stroke-width="2" rx="5"/>
+  <text x="700" y="425" text-anchor="middle" class="subtitle">Data Types and Flow Details</text>
+  
+  <!-- Price Data -->
+  <rect x="70" y="440" width="300" height="140" fill="#ecf0f1" rx="5"/>
+  <text x="220" y="465" text-anchor="middle" class="label">Price Data Flow</text>
+  <text x="80" y="485" class="label">• Token reserves (reserve0, reserve1)</text>
+  <text x="80" y="500" class="label">• Block timestamps</text>
+  <text x="80" y="515" class="label">• Price calculations</text>
+  <text x="80" y="530" class="label">• Liquidity metrics</text>
+  <text x="80" y="545" class="label">• Price impact analysis</text>
+  <text x="80" y="560" class="label">• Historical price data</text>
+  
+  <!-- Trade Data -->
+  <rect x="390" y="440" width="300" height="140" fill="#ecf0f1" rx="5"/>
+  <text x="540" y="465" text-anchor="middle" class="label">Trade Data Flow</text>
+  <text x="400" y="485" class="label">• Arbitrage opportunities</text>
+  <text x="400" y="500" class="label">• Profit calculations</text>
+  <text x="400" y="515" class="label">• Risk assessments</text>
+  <text x="400" y="530" class="label">• Position sizing</text>
+  <text x="400" y="545" class="label">• Transaction data</text>
+  <text x="400" y="560" class="label">• Execution results</text>
+  
+  <!-- API Data -->
+  <rect x="710" y="440" width="300" height="140" fill="#ecf0f1" rx="5"/>
+  <text x="860" y="465" text-anchor="middle" class="label">API Data Flow</text>
+  <text x="720" y="485" class="label">• HTTP requests/responses</text>
+  <text x="720" y="500" class="label">• WebSocket messages</text>
+  <text x="720" y="515" class="label">• Authentication tokens</text>
+  <text x="720" y="530" class="label">• Rate limiting data</text>
+  <text x="720" y="545" class="label">• Error responses</text>
+  <text x="720" y="560" class="label">• Status updates</text>
+  
+  <!-- Storage Data -->
+  <rect x="1030" y="440" width="300" height="140" fill="#ecf0f1" rx="5"/>
+  <text x="1180" y="465" text-anchor="middle" class="label">Storage Data Flow</text>
+  <text x="1040" y="485" class="label">• SQLite database records</text>
+  <text x="1040" y="500" class="label">• Log files</text>
+  <text x="1040" y="515" class="label">• Cache entries</text>
+  <text x="1040" y="530" class="label">• Configuration data</text>
+  <text x="1040" y="545" class="label">• Performance metrics</text>
+  <text x="1040" y="560" class="label">• Backup data</text>
+  
+  <!-- Legend -->
+  <rect x="50" y="650" width="1300" height="200" fill="#ffffff" stroke="#bdc3c7" stroke-width="2" rx="5"/>
+  <text x="700" y="675" text-anchor="middle" class="subtitle">Data Flow Legend</text>
+  
+  <line x1="70" y1="690" x2="120" y2="690" class="price-flow"/>
+  <text x="130" y="695" class="label">Price Data Flow - Real-time market data and price updates</text>
+  
+  <line x1="70" y1="710" x2="120" y2="710" class="trade-flow"/>
+  <text x="130" y="715" class="label">Trade Data Flow - Arbitrage opportunities and execution</text>
+  
+  <line x1="70" y1="730" x2="120" y2="730" class="api-flow"/>
+  <text x="130" y="735" class="label">API Data Flow - HTTP requests, responses, and WebSocket messages</text>
+  
+  <line x1="70" y1="750" x2="120" y2="750" class="storage-flow"/>
+  <text x="130" y="755" class="label">Storage Data Flow - Database operations and logging</text>
+  
+  <line x1="70" y1="770" x2="120" y2="770" class="arrow"/>
+  <text x="130" y="775" class="label">General Data Flow - Standard data movement</text>
+  
+  <!-- Performance Metrics -->
+  <rect x="70" y="800" width="600" height="30" fill="#ecf0f1" rx="3"/>
+  <text x="370" y="820" text-anchor="middle" class="label">Performance: 1000+ price updates/sec | 50ms latency | 99.9% uptime</text>
+  
+  <!-- Security Features -->
+  <rect x="690" y="800" width="600" height="30" fill="#ecf0f1" rx="3"/>
+  <text x="990" y="820" text-anchor="middle" class="label">Security: Rate limiting | Authentication | Input validation | MEV protection</text>
+</svg>
