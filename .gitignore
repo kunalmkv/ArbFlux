@@ -13,13 +13,6 @@ yarn.lock
 .env.test.local
 .env.production.local
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-arbitrage.db
-database/
-data/
 
 # Logs
 logs/
