@@ -28,9 +28,15 @@ class UniswapV2Math {
             const reserveInDecimal = new Decimal(reserveIn);
             const reserveOutDecimal = new Decimal(reserveOut);
             
-            // Validate inputs
-            if (amountInDecimal.lte(0) || reserveInDecimal.lte(0) || reserveOutDecimal.lte(0)) {
-                throw new Error('Invalid input: amounts and reserves must be positive');
+            // Validate inputs with more detailed error messages
+            if (amountInDecimal.lte(0)) {
+                throw new Error(`Invalid amountIn: ${amountIn} (must be positive)`);
+            }
+            if (reserveInDecimal.lte(0)) {
+                throw new Error(`Invalid reserveIn: ${reserveIn} (must be positive)`);
+            }
+            if (reserveOutDecimal.lte(0)) {
+                throw new Error(`Invalid reserveOut: ${reserveOut} (must be positive)`);
             }
             
             // Calculate amountInWithFee = amountIn * 997
@@ -54,7 +60,12 @@ class UniswapV2Math {
             
             return amountOut.toString();
         } catch (error) {
-            logger.error('Error in getAmountOut calculation', { error: error.message });
+            logger.error('Error in getAmountOut calculation', { 
+                error: error.message,
+                amountIn,
+                reserveIn,
+                reserveOut
+            });
             throw error;
         }
     }

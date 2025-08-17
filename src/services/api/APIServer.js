@@ -106,7 +106,22 @@ class APIServer {
             });
         });
         
-        // Get recent opportunities
+        // Root endpoint
+        this.app.get('/', (req, res) => {
+            res.json({
+                success: true,
+                message: 'Arbitrage Bot API Server',
+                version: '1.0.0',
+                endpoints: {
+                    health: '/health',
+                    opportunities: '/api/opportunities',
+                    statistics: '/api/statistics',
+                    documentation: '/api/docs'
+                }
+            });
+        });
+        
+        // Get recent opportunities (main endpoint)
         this.app.get('/api/opportunities', async (req, res) => {
             try {
                 const limit = parseInt(req.query.limit) || 50;
@@ -264,29 +279,7 @@ class APIServer {
             }
         });
         
-        // Get specific opportunity by ID
-        this.app.get('/api/opportunities/:id', async (req, res) => {
-            try {
-                const opportunityId = req.params.id;
-                
-                res.json({
-                    success: true,
-                    message: 'Opportunity details endpoint - implementation needed',
-                    id: opportunityId
-                });
-                
-            } catch (error) {
-                logger.error('Error getting opportunity by ID', {
-                    error: error.message,
-                    service: 'api-server'
-                });
-                
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
+        // Note: The /api/opportunities/:id route will be moved to the end to avoid conflicts
         
         // Get statistics
         this.app.get('/api/statistics', async (req, res) => {
@@ -375,23 +368,44 @@ class APIServer {
             });
         });
         
-        // Default route
-        this.app.get('/', (req, res) => {
-            res.json({
-                success: true,
-                message: 'Arbitrage Bot API Server',
-                version: '1.0.0',
-                endpoints: {
-                    health: '/health',
-                    opportunities: '/api/opportunities',
-                    statistics: '/api/statistics',
-                    documentation: '/api/docs'
+        // Get specific opportunity by ID (moved to the end to avoid conflicts with specific routes)
+        this.app.get('/api/opportunities/:id', async (req, res) => {
+            try {
+                const opportunityId = req.params.id;
+                
+                // Try to get the opportunity from database
+                const opportunity = await this.databaseService.getOpportunityById(opportunityId);
+                
+                if (opportunity) {
+                    res.json({
+                        success: true,
+                        data: opportunity
+                    });
+                } else {
+                    res.status(404).json({
+                        success: false,
+                        error: 'Opportunity not found',
+                        id: opportunityId
+                    });
                 }
-            });
+                
+            } catch (error) {
+                logger.error('Error getting opportunity by ID', {
+                    error: error.message,
+                    service: 'api-server'
+                });
+                
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
         });
         
+        // Note: Root route is already defined above
+        
         // 404 handler
-        this.app.use('*', (req, res) => {
+        this.app.use((req, res) => {
             res.status(404).json({
                 success: false,
                 error: 'Endpoint not found',

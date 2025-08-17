@@ -107,6 +107,7 @@ class ComprehensiveArbitrageBot {
             
             // Test mode for demonstration
             testMode: true, // Set to false for production
+            enableRealPriceFetching: true, // Set to true for production
         };
         
         // Statistics
@@ -116,7 +117,9 @@ class ComprehensiveArbitrageBot {
             directOpportunities: 0,
             totalProfit: new Decimal(0),
             scansCompleted: 0,
-            startTime: null
+            startTime: null,
+            priceFetchErrors: 0,
+            consecutiveErrors: 0
         };
         
         logger.info('ComprehensiveArbitrageBot initialized', {
@@ -139,7 +142,7 @@ class ComprehensiveArbitrageBot {
             // Check environment variables
             if (!process.env.ETHEREUM_RPC_URL) {
                 // Use a public RPC endpoint for demonstration
-                process.env.ETHEREUM_RPC_URL = 'https://eth.llamarpc.com';
+                process.env.ETHEREUM_RPC_URL = 'https://go.getblock.io/aefd01aa907c4805ba3c00a9e5b48c6b';
                 logger.info('Using public RPC endpoint for demonstration', {
                     service: 'comprehensive-arbitrage-bot'
                 });
@@ -156,21 +159,29 @@ class ComprehensiveArbitrageBot {
                 }
             ]);
             
-            // Test connection
-            await this.web3Manager.executeWithFailover(async (web3) => {
-                const blockNumber = await web3.eth.getBlockNumber();
-                logger.info('Connected to Ethereum network', {
-                    blockNumber: blockNumber,
+            // Test connection only if real price fetching is enabled
+            if (this.config.enableRealPriceFetching) {
+                await this.web3Manager.executeWithFailover(async (web3) => {
+                    const blockNumber = await web3.eth.getBlockNumber();
+                    logger.info('Connected to Ethereum network', {
+                        blockNumber: blockNumber,
+                        service: 'comprehensive-arbitrage-bot'
+                    });
+                    return blockNumber;
+                });
+            } else {
+                logger.info('Real price fetching disabled, skipping blockchain connection test', {
                     service: 'comprehensive-arbitrage-bot'
                 });
-                return blockNumber;
-            });
+            }
             
             // Initialize DEXPriceService
             this.dexPriceService = new DEXPriceService(this.web3Manager, {
                 supportedDEXs: this.config.supportedDEXs,
                 batchSize: 25,
-                cacheTTL: 10000
+                cacheTTL: 10000,
+                maxRetries: 2, // Reduce retries to avoid long delays
+                timeout: 10000 // 10 second timeout
             });
             
             // Initialize PriceMonitoringWorker
@@ -270,13 +281,28 @@ class ComprehensiveArbitrageBot {
             this.isRunning = true;
             this.stats.startTime = Date.now();
             
-            // Start price monitoring
-            await this.priceMonitoringWorker.start();
+            // Start price monitoring only if real price fetching is enabled
+            if (this.config.enableRealPriceFetching) {
+                await this.priceMonitoringWorker.start();
+            } else {
+                logger.info('Real price fetching disabled, skipping price monitoring worker', {
+                    service: 'comprehensive-arbitrage-bot'
+                });
+            }
             
-            // Skip TradingBot and APIServer for now to focus on core functionality
-            logger.info('Skipping TradingBot and APIServer for core functionality demonstration', {
-                service: 'comprehensive-arbitrage-bot'
-            });
+            // Start API server for testing
+            try {
+                await this.apiServer.start();
+                logger.info('API server started successfully for testing', {
+                    port: this.config.apiPort,
+                    service: 'comprehensive-arbitrage-bot'
+                });
+            } catch (error) {
+                logger.warn('Failed to start API server, continuing without API', {
+                    error: error.message,
+                    service: 'comprehensive-arbitrage-bot'
+                });
+            }
             
             // Start comprehensive scanning
             this.startComprehensiveScanning();
@@ -356,15 +382,50 @@ class ComprehensiveArbitrageBot {
             });
             
             // Get current gas price
-            const gasPrice = await this.web3Manager.getGasPrice();
+            let gasPrice;
+            try {
+                gasPrice = await this.web3Manager.executeWithFailover(async (web3) => {
+                    return await web3.eth.getGasPrice();
+                });
+            } catch (error) {
+                logger.warn('Failed to get gas price, using default', {
+                    error: error.message,
+                    defaultGasPrice: '20000000000', // 20 gwei
+                    service: 'comprehensive-arbitrage-bot'
+                });
+                gasPrice = '20000000000'; // 20 gwei default
+            }
+            
+            // Add a small delay to avoid overwhelming the RPC
+            await new Promise(resolve => setTimeout(resolve, 100));
             
             // Scan for direct arbitrage opportunities
-            await this.scanDirectArbitrage(gasPrice);
+            if (this.config.enableRealPriceFetching) {
+                await this.scanDirectArbitrage(gasPrice);
+            } else {
+                logger.info('Real price fetching disabled, skipping direct arbitrage scan', {
+                    service: 'comprehensive-arbitrage-bot'
+                });
+            }
             
             // Scan for triangular arbitrage opportunities
-            await this.scanTriangularArbitrage(gasPrice);
+            if (this.config.enableRealPriceFetching) {
+                await this.scanTriangularArbitrage(gasPrice);
+            } else {
+                logger.info('Real price fetching disabled, skipping triangular arbitrage scan', {
+                    service: 'comprehensive-arbitrage-bot'
+                });
+            }
             
             this.stats.scansCompleted++;
+            
+            // Reset consecutive errors on successful scan
+            if (this.stats.consecutiveErrors > 0) {
+                this.stats.consecutiveErrors = 0;
+                logger.info('Reset consecutive error counter after successful scan', {
+                    service: 'comprehensive-arbitrage-bot'
+                });
+            }
             
             logger.info('Comprehensive scan completed', {
                 scanTime: Date.now() - startTime,
@@ -373,10 +434,33 @@ class ComprehensiveArbitrageBot {
             });
             
         } catch (error) {
+            this.stats.priceFetchErrors++;
+            this.stats.consecutiveErrors++;
+            
             logger.error('Error in comprehensive scanning', {
                 error: error.message,
+                consecutiveErrors: this.stats.consecutiveErrors,
+                totalErrors: this.stats.priceFetchErrors,
                 service: 'comprehensive-arbitrage-bot'
             });
+            
+            // If too many consecutive errors, temporarily disable real price fetching
+            if (this.stats.consecutiveErrors >= 5) {
+                logger.warn('Too many consecutive errors, temporarily disabling real price fetching', {
+                    consecutiveErrors: this.stats.consecutiveErrors,
+                    service: 'comprehensive-arbitrage-bot'
+                });
+                this.config.enableRealPriceFetching = false;
+                
+                // Re-enable after 30 seconds
+                setTimeout(() => {
+                    this.config.enableRealPriceFetching = true;
+                    this.stats.consecutiveErrors = 0;
+                    logger.info('Re-enabled real price fetching after error recovery', {
+                        service: 'comprehensive-arbitrage-bot'
+                    });
+                }, 30000);
+            }
         }
     }
     
@@ -388,35 +472,48 @@ class ComprehensiveArbitrageBot {
             let realOpportunitiesFound = 0;
             
             for (const pair of this.config.directPairs) {
-                const opportunities = await this.tradingStrategyEngine.detectOpportunities(
-                    [pair],
-                    this.config.supportedDEXs,
-                    'latest'
-                );
-                
-                for (const opportunity of opportunities) {
-                    if (opportunity.qualified) {
-                        realOpportunitiesFound++;
-                        this.stats.opportunitiesFound++;
-                        this.stats.directOpportunities++;
-                        this.stats.totalProfit = this.stats.totalProfit.plus(opportunity.netProfitUSD);
-                        
-                        // Store in database
-                        await this.databaseService.storeOpportunity({
-                            ...opportunity,
-                            type: 'direct',
-                            timestamp: Date.now()
-                        });
-                        
-                        // Log and simulate
-                        this.logOpportunity(opportunity, 'Direct');
-                        await this.simulateTradeExecution(opportunity);
+                try {
+                    const opportunities = await this.tradingStrategyEngine.detectOpportunities(
+                        [pair],
+                        this.config.supportedDEXs,
+                        'latest'
+                    );
+                    
+                    for (const opportunity of opportunities) {
+                        if (opportunity.qualified) {
+                            realOpportunitiesFound++;
+                            this.stats.opportunitiesFound++;
+                            this.stats.directOpportunities++;
+                            this.stats.totalProfit = this.stats.totalProfit.plus(opportunity.netProfitUSD);
+                            
+                            // Store in database
+                            await this.databaseService.storeOpportunity({
+                                ...opportunity,
+                                type: 'direct',
+                                timestamp: Date.now()
+                            });
+                            
+                            // Log and simulate
+                            this.logOpportunity(opportunity, 'Direct');
+                            await this.simulateTradeExecution(opportunity);
+                        }
                     }
+                } catch (error) {
+                    logger.warn('Failed to detect opportunities for pair', {
+                        pair: pair.name,
+                        error: error.message,
+                        service: 'comprehensive-arbitrage-bot'
+                    });
                 }
             }
             
-            // If no real opportunities found and test mode is enabled, generate test opportunities
-            if (realOpportunitiesFound === 0 && this.config.testMode && this.stats.scansCompleted % 3 === 0) {
+            // If real price fetching is disabled or no real opportunities found, generate test opportunities
+            if ((!this.config.enableRealPriceFetching || realOpportunitiesFound === 0) && this.config.testMode && this.stats.scansCompleted % 10 === 0) {
+                logger.info('No real opportunities found, generating test opportunities for demonstration', {
+                    scanNumber: this.stats.scansCompleted,
+                    service: 'comprehensive-arbitrage-bot'
+                });
+                
                 const testOpportunities = this.generateTestOpportunities();
                 
                 for (const opportunity of testOpportunities) {
@@ -477,8 +574,13 @@ class ComprehensiveArbitrageBot {
                 }
             }
             
-            // If no real opportunities found and test mode is enabled, generate test opportunities
-            if (realOpportunitiesFound === 0 && this.config.testMode && this.stats.scansCompleted % 5 === 0) {
+            // If real price fetching is disabled or no real opportunities found, generate test opportunities
+            if ((!this.config.enableRealPriceFetching || realOpportunitiesFound === 0) && this.config.testMode && this.stats.scansCompleted % 15 === 0) {
+                logger.info('No real triangular opportunities found, generating test opportunities for demonstration', {
+                    scanNumber: this.stats.scansCompleted,
+                    service: 'comprehensive-arbitrage-bot'
+                });
+                
                 const testOpportunities = this.generateTestOpportunities();
                 
                 for (const opportunity of testOpportunities) {
@@ -519,25 +621,55 @@ class ComprehensiveArbitrageBot {
             const prices = {};
             
             for (const dexName of this.config.supportedDEXs) {
-                // Get A->B price
-                const priceAB = await this.dexPriceService.getPrice(tokenA, tokenB, dexName);
-                if (priceAB) {
-                    if (!prices[dexName]) prices[dexName] = {};
-                    prices[dexName]['AB'] = priceAB;
+                try {
+                    // Get A->B price
+                    const priceAB = await this.dexPriceService.getPrice(tokenA, tokenB, dexName);
+                    if (priceAB) {
+                        if (!prices[dexName]) prices[dexName] = {};
+                        prices[dexName]['AB'] = priceAB;
+                    }
+                } catch (error) {
+                    logger.warn('Failed to get A->B price', {
+                        dexName,
+                        tokenA,
+                        tokenB,
+                        error: error.message,
+                        service: 'comprehensive-arbitrage-bot'
+                    });
                 }
                 
-                // Get B->C price
-                const priceBC = await this.dexPriceService.getPrice(tokenB, tokenC, dexName);
-                if (priceBC) {
-                    if (!prices[dexName]) prices[dexName] = {};
-                    prices[dexName]['BC'] = priceBC;
+                try {
+                    // Get B->C price
+                    const priceBC = await this.dexPriceService.getPrice(tokenB, tokenC, dexName);
+                    if (priceBC) {
+                        if (!prices[dexName]) prices[dexName] = {};
+                        prices[dexName]['BC'] = priceBC;
+                    }
+                } catch (error) {
+                    logger.warn('Failed to get B->C price', {
+                        dexName,
+                        tokenB,
+                        tokenC,
+                        error: error.message,
+                        service: 'comprehensive-arbitrage-bot'
+                    });
                 }
                 
-                // Get A->C price
-                const priceAC = await this.dexPriceService.getPrice(tokenA, tokenC, dexName);
-                if (priceAC) {
-                    if (!prices[dexName]) prices[dexName] = {};
-                    prices[dexName]['AC'] = priceAC;
+                try {
+                    // Get A->C price
+                    const priceAC = await this.dexPriceService.getPrice(tokenA, tokenC, dexName);
+                    if (priceAC) {
+                        if (!prices[dexName]) prices[dexName] = {};
+                        prices[dexName]['AC'] = priceAC;
+                    }
+                } catch (error) {
+                    logger.warn('Failed to get A->C price', {
+                        dexName,
+                        tokenA,
+                        tokenC,
+                        error: error.message,
+                        service: 'comprehensive-arbitrage-bot'
+                    });
                 }
             }
             
@@ -622,6 +754,12 @@ class ComprehensiveArbitrageBot {
                 type: 'triangular',
                 pair: triangularPair.name,
                 path: `${tokenA} -> ${tokenB} -> ${tokenC} -> ${tokenA}`,
+                buyDex: dex1,  // First DEX for the triangular path
+                sellDex: dex2, // Second DEX for the triangular path
+                buyPrice: prices1.AB ? prices1.AB.price0.toString() : '0',
+                sellPrice: prices2.AC ? prices2.AC.price0.toString() : '0',
+                priceDifference: grossProfit.toString(),
+                priceDifferencePercent: grossProfit.dividedBy(tradeAmount).times(100).toString(),
                 dex1: dex1,
                 dex2: dex2,
                 tradeAmount: tradeAmount.toString(),
@@ -630,6 +768,9 @@ class ComprehensiveArbitrageBot {
                 swapFeesUSD: swapFees.toString(),
                 netProfitUSD: netProfit.toString(),
                 profitWithSafetyMargin: profitWithSafetyMargin.toString(),
+                buyPairAddress: '0x0000000000000000000000000000000000000000', // Placeholder
+                sellPairAddress: '0x0000000000000000000000000000000000000000', // Placeholder
+                blockNumber: 'latest',
                 timestamp: Date.now()
             };
             
@@ -726,6 +867,14 @@ class ComprehensiveArbitrageBot {
             const buyPrice = basePrice;
             const sellPrice = basePrice * (1 + priceDiff);
             
+            // Calculate realistic profit based on price difference
+            const tradeAmount = 1000; // $1000
+            const grossProfit = (sellPrice - buyPrice) * tradeAmount / buyPrice; // Realistic calculation
+            const gasCost = 60; // $60 gas
+            const swapFees = tradeAmount * 0.003 * 2; // 0.3% fee for buy + sell
+            const netProfit = grossProfit - gasCost - swapFees;
+            const profitWithSafetyMargin = netProfit * 0.9; // 10% safety margin
+            
             const opportunity = {
                 id: `test-direct-${Date.now()}-${index}`,
                 type: 'direct',
@@ -736,12 +885,12 @@ class ComprehensiveArbitrageBot {
                 sellPrice: sellPrice.toFixed(6),
                 priceDifference: (sellPrice - buyPrice).toFixed(6),
                 priceDifferencePercent: (priceDiff * 100).toFixed(3),
-                tradeAmount: '1000',
-                grossProfitUSD: ((sellPrice - buyPrice) * 1000).toFixed(2),
-                gasCostUSD: '60.00',
-                swapFeesUSD: '6.00',
-                netProfitUSD: (((sellPrice - buyPrice) * 1000) - 60 - 6).toFixed(2),
-                profitWithSafetyMargin: (((sellPrice - buyPrice) * 1000) - 60 - 6) * 0.9,
+                tradeAmount: tradeAmount.toString(),
+                grossProfitUSD: grossProfit.toFixed(2),
+                gasCostUSD: gasCost.toFixed(2),
+                swapFeesUSD: swapFees.toFixed(2),
+                netProfitUSD: netProfit.toFixed(2),
+                profitWithSafetyMargin: profitWithSafetyMargin.toFixed(2),
                 timestamp: Date.now()
             };
             
@@ -754,14 +903,23 @@ class ComprehensiveArbitrageBot {
             type: 'triangular',
             pair: 'WETH/USDC/USDT',
             path: 'WETH -> USDC -> USDT -> WETH',
+            buyDex: 'uniswap',  // First DEX for the triangular path
+            sellDex: 'sushiswap', // Second DEX for the triangular path
+            buyPrice: '2000.00', // Starting price (WETH price)
+            sellPrice: '2012.50', // Final price after triangular path
+            priceDifference: '12.50', // Net price difference
+            priceDifferencePercent: '0.625', // Percentage difference
             dex1: 'uniswap',
             dex2: 'sushiswap',
             tradeAmount: '1000',
-            grossProfitUSD: '45.50',
+            grossProfitUSD: '12.50',
             gasCostUSD: '60.00',
             swapFeesUSD: '9.00',
-            netProfitUSD: '-23.50',
-            profitWithSafetyMargin: '-23.50',
+            netProfitUSD: '-56.50',
+            profitWithSafetyMargin: '-56.50',
+            buyPairAddress: '0x0000000000000000000000000000000000000000', // Placeholder
+            sellPairAddress: '0x0000000000000000000000000000000000000000', // Placeholder
+            blockNumber: 'latest',
             timestamp: Date.now()
         };
         
